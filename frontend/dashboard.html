@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="dashboardTitle">Dashboard - SmartQuota</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #0078D4;
+      --primary-dark: #0062ab;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --dark: #1f2937;
+      --light: #f8fafc;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .main-content {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px 0 0 20px;
+      min-height: 100vh;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+    }
+    
+    .stat-card.success {
+      background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    }
+    
+    .stat-card.warning {
+      background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+    }
+    
+    .stat-card.danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+    }
+    
+    .nav-item {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      margin: 4px 0;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+      background: var(--primary);
+      color: white;
+      transform: translateX(4px);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 120, 212, 0.4);
+    }
+    
+    .progress-bar {
+      background: linear-gradient(90deg, var(--success) 0%, var(--info) 100%);
+      border-radius: 10px;
+      height: 8px;
+      transition: width 0.5s ease;
+    }
+    
+    .notification {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-left: 4px solid var(--info);
+      border-radius: 0 12px 12px 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark-mode {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+    
+    .dark-mode .sidebar,
+    .dark-mode .main-content,
+    .dark-mode .card {
+      background: rgba(45, 55, 72, 0.95);
+      color: #e2e8f0;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 50;
+        height: 100vh;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        border-radius: 0;
+        margin-left: 0;
+      }
+    }
+
+    /* Evitar transições/anim. no overlay de loading e prevenir "piscar" */
+    #loadingScreen {
+      will-change: opacity, transform;
+      transition: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="fixed inset-0 bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center z-50">
+    <div class="text-center text-white">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+      <h2 class="text-2xl font-bold mb-2">SmartQuota</h2>
+      <p data-i18n="loading">Carregando seu dashboard...</p>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div id="mainApp" class="hidden flex min-h-screen">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar w-64 p-6 flex flex-col">
+      <!-- Logo -->
+      <div class="flex items-center mb-8">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+          <i class="fas fa-chart-line text-white"></i>
+        </div>
+        <h1 class="text-xl font-bold text-gray-800">SmartQuota</h1>
+      </div>
+
+      <!-- User Info -->
+      <div class="card p-4 mb-6">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+            <i class="fas fa-user text-white"></i>
+          </div>
+          <div>
+            <h3 id="userName" class="font-semibold text-gray-800">Carregando...</h3>
+            <p id="userEmail" class="text-sm text-gray-600">...</p>
+            <span id="userStatus" class="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mt-1">
+              <i class="fas fa-check-circle mr-1"></i>
+              <span data-i18n="verified">Verificado</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1">
+        <ul class="space-y-2">
+          <li>
+            <a href="#dashboard" class="nav-item active flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-home mr-3"></i>
+              <span data-i18n="dashboard">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="#quotas" class="nav-item flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-calculator mr-3"></i>
+              <span data-i18n="quotas">Minhas Cotas</span>
+            </a>
+          </li>
+          <li>
+            <a href="#comparator" class="nav-item flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-balance-scale mr-3"></i>
+              <span data-i18n="comparator">Comparador</span>
+            </a>
+          </li>
+          <li>
+            <a href="#alerts" class="nav-item flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-bell mr-3"></i>
+              <span data-i18n="alerts">Alertas</span>
+              <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">3</span>
+            </a>
+          </li>
+          <li>
+            <a href="#education" class="nav-item flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-graduation-cap mr-3"></i>
+              <span data-i18n="education">Educação</span>
+            </a>
+          </li>
+          <li>
+            <a href="#profile" class="nav-item flex items-center p-3 text-gray-700 hover:text-white cursor-pointer">
+              <i class="fas fa-user-cog mr-3"></i>
+              <span data-i18n="profile">Perfil</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Settings & Logout -->
+      <div class="mt-auto space-y-2">
+        <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+          <i class="fas fa-moon mr-3"></i>
+          <span data-i18n="darkMode">Modo Escuro</span>
+        </button>
+        <button id="logoutBtn" class="w-full flex items-center p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+          <i class="fas fa-sign-out-alt mr-3"></i>
+          <span data-i18n="logout">Sair</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content flex-1 p-8">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2" data-i18n="welcomeBack">Bem-vindo de volta!</h1>
+          <p class="text-gray-600" data-i18n="dashboardSubtitle">Gerencie suas cotas de consórcio de forma inteligente</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <!-- Language Selector -->
+          <select id="languageSelect" class="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <option value="pt">🇵🇹 Português</option>
+            <option value="en">🇺🇸 English</option>
+          </select>
+          
+          <!-- Mobile Menu Toggle -->
+          <button id="mobileMenuToggle" class="md:hidden bg-white p-2 rounded-lg shadow">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card stat-card p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-blue-100 text-sm font-medium" data-i18n="totalQuotas">Total de Cotas</p>
+              <p class="text-3xl font-bold">3</p>
+            </div>
+            <div class="bg-white bg-opacity-20 p-3 rounded-full">
+              <i class="fas fa-calculator text-2xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="card stat-card success p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-green-100 text-sm font-medium" data-i18n="activeQuotas">Cotas Ativas</p>
+              <p class="text-3xl font-bold">2</p>
+            </div>
+            <div class="bg-white bg-opacity-20 p-3 rounded-full">
+              <i class="fas fa-check-circle text-2xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="card stat-card warning p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-yellow-100 text-sm font-medium" data-i18n="monthlyPayment">Pagamento Mensal</p>
+              <p class="text-3xl font-bold" id="monthlyAmount">€450</p>
+            </div>
+            <div class="bg-white bg-opacity-20 p-3 rounded-full">
+              <i class="fas fa-euro-sign text-2xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="card stat-card danger p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-red-100 text-sm font-medium" data-i18n="pendingAlerts">Alertas Pendentes</p>
+              <p class="text-3xl font-bold">3</p>
+            </div>
+            <div class="bg-white bg-opacity-20 p-3 rounded-full">
+              <i class="fas fa-exclamation-triangle text-2xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Charts Section -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Payment Progress Chart -->
+          <div class="card p-6">
+            <h3 class="text-xl font-semibold mb-4" data-i18n="paymentProgress">Progresso dos Pagamentos</h3>
+            <canvas id="progressChart" width="400" height="200"></canvas>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card p-6">
+            <h3 class="text-xl font-semibold mb-4" data-i18n="recentActivity">Atividade Recente</h3>
+            <div class="space-y-4">
+              <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <i class="fas fa-check text-green-600"></i>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium" data-i18n="paymentReceived">Pagamento recebido</p>
+                  <p class="text-sm text-gray-600">Cota Imobiliária - €250</p>
+                </div>
+                <span class="text-sm text-gray-500">2h atrás</span>
+              </div>
+              
+              <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <i class="fas fa-info text-blue-600"></i>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium" data-i18n="newOpportunity">Nova oportunidade disponível</p>
+                  <p class="text-sm text-gray-600">Consórcio Automóvel Premium</p>
+                </div>
+                <span class="text-sm text-gray-500">1 dia atrás</span>
+              </div>
+              
+              <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                  <i class="fas fa-exclamation text-yellow-600"></i>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium" data-i18n="paymentDue">Pagamento próximo do vencimento</p>
+                  <p class="text-sm text-gray-600">Vence em 3 dias - €200</p>
+                </div>
+                <span class="text-sm text-gray-500">3 dias</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="space-y-6">
+          <!-- Quick Actions -->
+          <div class="card p-6">
+            <h3 class="text-xl font-semibold mb-4" data-i18n="quickActions">Ações Rápidas</h3>
+            <div class="space-y-3">
+              <button class="btn-primary w-full">
+                <i class="fas fa-plus mr-2"></i>
+                <span data-i18n="addQuota">Adicionar Cota</span>
+              </button>
+              <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors">
+                <i class="fas fa-search mr-2"></i>
+                <span data-i18n="findOpportunities">Buscar Oportunidades</span>
+              </button>
+              <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors">
+                <i class="fas fa-file-export mr-2"></i>
+                <span data-i18n="exportData">Exportar Dados</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="card p-6">
+            <h3 class="text-xl font-semibold mb-4" data-i18n="notifications">Notificações</h3>
+            <div class="space-y-3">
+              <div class="notification p-3">
+                <p class="font-medium text-sm" data-i18n="rateChange">Taxa de juros alterada</p>
+                <p class="text-xs text-gray-600 mt-1">Consórcio Imobiliário - Nova taxa: 0.8%</p>
+              </div>
+              <div class="notification p-3 border-l-yellow-500">
+                <p class="font-medium text-sm" data-i18n="documentPending">Documento pendente</p>
+                <p class="text-xs text-gray-600 mt-1">Envie a comprovação de renda</p>
+              </div>
+              <div class="notification p-3 border-l-green-500">
+                <p class="font-medium text-sm" data-i18n="contemplation">Contemplação disponível</p>
+                <p class="text-xs text-gray-600 mt-1">Você foi contemplado! Verifique os detalhes</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Insights -->
+          <div class="card p-6 bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+            <h3 class="text-xl font-semibold mb-4">
+              <i class="fas fa-brain mr-2"></i>
+              <span data-i18n="aiInsights">Insights IA</span>
+            </h3>
+            <div class="space-y-3">
+              <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                <p class="text-sm font-medium" data-i18n="suggestion1">Sugestão de Otimização</p>
+                <p class="text-xs mt-1" data-i18n="suggestion1Text">Considere antecipar 2 parcelas para reduzir juros em 15%</p>
+              </div>
+              <div class="bg-white bg-opacity-20 p-3 rounded-lg">
+                <p class="text-sm font-medium" data-i18n="marketTrend">Tendência do Mercado</p>
+                <p class="text-xs mt-1" data-i18n="marketTrendText">Preços imobiliários em alta. Bom momento para contemplação</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3001';
+    
+    // Estabilidade visual extra (evita saltos ao restaurar rolagem)
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Translations
+    const translations = {
+      pt: {
+        dashboardTitle: 'Dashboard - SmartQuota',
+        loading: 'Carregando seu dashboard...',
+        verified: 'Verificado',
+        dashboard: 'Dashboard',
+        quotas: 'Minhas Cotas',
+        comparator: 'Comparador',
+        alerts: 'Alertas',
+        education: 'Educação',
+        profile: 'Perfil',
+        darkMode: 'Modo Escuro',
+        logout: 'Sair',
+        welcomeBack: 'Bem-vindo de volta!',
+        dashboardSubtitle: 'Gerencie suas cotas de consórcio de forma inteligente',
+        totalQuotas: 'Total de Cotas',
+        activeQuotas: 'Cotas Ativas',
+        monthlyPayment: 'Pagamento Mensal',
+        pendingAlerts: 'Alertas Pendentes',
+        paymentProgress: 'Progresso dos Pagamentos',
+        recentActivity: 'Atividade Recente',
+        quickActions: 'Ações Rápidas',
+        addQuota: 'Adicionar Cota',
+        findOpportunities: 'Buscar Oportunidades',
+        exportData: 'Exportar Dados',
+        notifications: 'Notificações',
+        aiInsights: 'Insights IA',
+        paymentReceived: 'Pagamento recebido',
+        newOpportunity: 'Nova oportunidade disponível',
+        paymentDue: 'Pagamento próximo do vencimento',
+        rateChange: 'Taxa de juros alterada',
+        documentPending: 'Documento pendente',
+        contemplation: 'Contemplação disponível',
+        suggestion1: 'Sugestão de Otimização',
+        suggestion1Text: 'Considere antecipar 2 parcelas para reduzir juros em 15%',
+        marketTrend: 'Tendência do Mercado',
+        marketTrendText: 'Preços imobiliários em alta. Bom momento para contemplação'
+      },
+      en: {
+        dashboardTitle: 'Dashboard - SmartQuota',
+        loading: 'Loading your dashboard...',
+        verified: 'Verified',
+        dashboard: 'Dashboard',
+        quotas: 'My Quotas',
+        comparator: 'Comparator',
+        alerts: 'Alerts',
+        education: 'Education',
+        profile: 'Profile',
+        darkMode: 'Dark Mode',
+        logout: 'Logout',
+        welcomeBack: 'Welcome back!',
+        dashboardSubtitle: 'Manage your consortium quotas intelligently',
+        totalQuotas: 'Total Quotas',
+        activeQuotas: 'Active Quotas',
+        monthlyPayment: 'Monthly Payment',
+        pendingAlerts: 'Pending Alerts',
+        paymentProgress: 'Payment Progress',
+        recentActivity: 'Recent Activity',
+        quickActions: 'Quick Actions',
+        addQuota: 'Add Quota',
+        findOpportunities: 'Find Opportunities',
+        exportData: 'Export Data',
+        notifications: 'Notifications',
+        aiInsights: 'AI Insights',
+        paymentReceived: 'Payment received',
+        newOpportunity: 'New opportunity available',
+        paymentDue: 'Payment due soon',
+        rateChange: 'Interest rate changed',
+        documentPending: 'Document pending',
+        contemplation: 'Contemplation available',
+        suggestion1: 'Optimization Suggestion',
+        suggestion1Text: 'Consider advancing 2 installments to reduce interest by 15%',
+        marketTrend: 'Market Trend',
+        marketTrendText: 'Real estate prices rising. Good time for contemplation'
+      }
+    };
+
+    let currentLang = 'pt';
+    let currentUser = null;
+
+    // Função robusta para esconder/remover o loading
+    function hideLoading() {
+      const loading = document.getElementById('loadingScreen');
+      const app = document.getElementById('mainApp');
+      if (!loading || !app) return;
+      app.classList.remove('hidden');
+      // remove no próximo frame para evitar flicker
+      requestAnimationFrame(() => {
+        loading.style.display = 'none';
+        try { loading.remove(); } catch (e) { /* fallback para browsers antigos */ loading.parentNode && loading.parentNode.removeChild(loading); }
+      });
+    }
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkAuth();
+      initializeEventListeners();
+      initializeChart();
+      detectBrowserLanguage();
+      
+      // Esconde o loading de forma segura (sem piscar)
+      setTimeout(hideLoading, 1000);
+    });
+
+    // Check authentication
+    async function checkAuth() {
+      const token = localStorage.getItem('smartquota_token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          currentUser = data.user;
+          updateUserInfo(data.user);
+        } else {
+          localStorage.removeItem('smartquota_token');
+          window.location.href = 'login.html';
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('smartquota_token');
+        window.location.href = 'login.html';
+      }
+    }
+
+    // Update user info in UI
+    function updateUserInfo(user) {
+      document.getElementById('userName').textContent = user.nome;
+      document.getElementById('userEmail').textContent = user.email;
+      
+      const statusElement = document.getElementById('userStatus');
+      if (user.confirmado) {
+        statusElement.innerHTML = '<i class="fas fa-check-circle mr-1"></i><span data-i18n="verified">Verificado</span>';
+        statusElement.className = 'inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mt-1';
+      } else {
+        statusElement.innerHTML = '<i class="fas fa-clock mr-1"></i>Pendente';
+        statusElement.className = 'inline-block px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 mt-1';
+      }
+    }
+
+    // Initialize event listeners
+    function initializeEventListeners() {
+      // Mobile menu toggle
+      document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+      });
+
+      // Theme toggle
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+      // Language selector
+      document.getElementById('languageSelect').addEventListener('change', (e) => {
+        setLanguage(e.target.value);
+      });
+
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Navigation items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+    }
+
+    // Initialize chart
+    function initializeChart() {
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pago', 'Restante'],
+          datasets: [{
+            data: [65, 35],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(229, 231, 235, 0.8)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    // Language functions
+    function detectBrowserLanguage() {
+      const browserLang = navigator.language.split('-')[0];
+      if (translations[browserLang]) {
+        setLanguage(browserLang);
+      }
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.getElementById('languageSelect').value = lang;
+      
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          element.textContent = translations[lang][key];
+        }
+      });
+
+      // Update currency display based on user's currency
+      if (currentUser) {
+        updateCurrencyDisplay();
+      }
+    }
+
+    function updateCurrencyDisplay() {
+      const monthlyAmountElement = document.getElementById('monthlyAmount');
+      const currency = currentUser.moeda || 'EUR';
+      const symbols = { EUR: '€', USD: '$', GBP: '£', BRL: 'R$' };
+      const symbol = symbols[currency] || currency;
+      monthlyAmountElement.textContent = `${symbol}450`;
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      
+      const themeIcon = document.querySelector('#themeToggle i');
+      themeIcon.className = isDark ? 'fas fa-sun mr-3' : 'fas fa-moon mr-3';
+    }
+
+    // Logout function
+    function logout() {
+      if (confirm('Tem certeza que deseja sair?')) {
+        localStorage.removeItem('smartquota_token');
+        window.location.href = 'login.html';
+      }
+    }
+
+    // Load saved theme
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.querySelector('#themeToggle i').className = 'fas fa-sun mr-3';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="loginTitle">Login - SmartQuota</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background-color: #ffffff;
+      padding: 2.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 28rem;
+      text-align: center;
+    }
+    .dark-mode body { background-color: #1a202c; }
+    .dark-mode .container { background-color: #2d3748; color: #e2e8f0; }
+    .dark-mode input { background-color: #4a5568; color: #e2e8f0; border-color: #4a5568; }
+    .dark-mode input:focus { border-color: #63b3ed; box-shadow: 0 0 0 3px rgba(99,179,237,.5); }
+    .dark-mode button { background-color: #4299e1; }
+    .dark-mode button:hover { background-color: #3182ce; }
+    .dark-mode a { color: #63b3ed; }
+    .dark-mode .text-gray-600 { color: #a0aec0; }
+    .dark-mode .text-red-500 { color: #fc8181; }
+    .dark-mode .text-green-500 { color: #68d391; }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 37px;
+      cursor: pointer;
+      color: #6b7280;
+    }
+
+    /* Spinner pequeno para o botão */
+    .btn-spinner {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+  <div class="container">
+    <h2 class="text-3xl font-extrabold mb-6" data-i18n="loginHeader">Login SmartQuota</h2>
+
+    <div id="message" class="hidden p-3 mb-4 text-sm rounded-lg" role="alert" aria-live="polite"></div>
+
+    <form id="loginForm" class="space-y-4" data-sending="false">
+      <div class="relative">
+        <label for="email" class="block text-left text-sm font-medium text-gray-700" data-i18n="emailLabel">Email:</label>
+        <input type="email" id="email" name="email" required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+               autocomplete="email">
+      </div>
+      <div class="relative">
+        <label for="password" class="block text-left text-sm font-medium text-gray-700" data-i18n="passwordLabel">Senha:</label>
+        <input type="password" id="password" name="password" required
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+               autocomplete="current-password">
+        <span id="togglePassword" class="password-toggle" title="Mostrar / ocultar senha"><i class="fas fa-eye"></i></span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="inline-flex items-center text-sm">
+          <input type="checkbox" id="rememberMe" class="form-checkbox h-4 w-4 text-blue-600">
+          <span class="ml-2 text-gray-600 text-sm">Lembrar-me</span>
+        </label>
+        <a href="recuperar.html" class="text-sm text-blue-600 hover:text-blue-500" data-i18n="forgotPassword">Esqueci minha senha</a>
+      </div>
+
+      <button id="submitBtn" type="submit"
+              class="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              data-i18n="loginButton" aria-busy="false">
+        Entrar
+      </button>
+    </form>
+
+    <p class="mt-6 text-sm text-gray-600">
+      <span data-i18n="noAccount">Não tem uma conta?</span>
+      <a id="linkRegister" href="index.html" class="font-medium text-blue-600 hover:text-blue-500" data-i18n="registerNow">Cadastre-se agora</a>
+    </p>
+
+    <div class="mt-6 flex justify-center space-x-4">
+      <button id="lang-pt" class="text-sm text-gray-600 hover:text-blue-600 focus:outline-none">Português</button>
+      <button id="lang-en" class="text-sm text-gray-600 hover:text-blue-600 focus:outline-none">English</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3001'; // Ajuste se seu backend estiver em outra porta/URL
+    const TOKEN_KEY = 'sq_token'; // padrão utilizado no frontend
+    const USER_KEY = 'sq_user';
+
+    const translations = {
+      pt: {
+        loginTitle: 'Login - SmartQuota',
+        loginHeader: 'Login SmartQuota',
+        emailLabel: 'Email:',
+        passwordLabel: 'Senha:',
+        loginButton: 'Entrar',
+        forgotPassword: 'Esqueci minha senha',
+        noAccount: 'Não tem uma conta?',
+        registerNow: 'Cadastre-se agora',
+        loginSuccess: 'Login realizado com sucesso! Redirecionando...',
+        invalidCredentials: 'Email ou senha inválidos.',
+        rateLimitExceeded: 'Muitas tentativas de login. Tente novamente em {seconds} segundos.',
+        serverError: 'Erro no servidor. Tente novamente mais tarde.',
+        networkError: 'Erro de conexão. Verifique sua internet.',
+        unknownError: 'Ocorreu um erro inesperado. Tente novamente.',
+        emailJustConfirmed: 'Email confirmado com sucesso! Faça login para continuar.',
+        tokenInvalidCleared: 'Token inválido encontrado e removido. Tente efetuar login novamente.'
+      },
+      en: {
+        loginTitle: 'Login - SmartQuota',
+        loginHeader: 'SmartQuota Login',
+        emailLabel: 'Email:',
+        passwordLabel: 'Password',
+        loginButton: 'Login',
+        forgotPassword: 'Forgot my password',
+        noAccount: 'Don\'t have an account?',
+        registerNow: 'Register now',
+        loginSuccess: 'Login successful! Redirecting...',
+        invalidCredentials: 'Invalid email or password.',
+        rateLimitExceeded: 'Too many login attempts. Try again in {seconds} seconds.',
+        serverError: 'Server error. Please try again later.',
+        networkError: 'Connection error. Check your internet.',
+        unknownError: 'An unexpected error occurred. Please try again.',
+        emailJustConfirmed: 'Email confirmed! Please log in to continue.',
+        tokenInvalidCleared: 'Invalid token found and removed. Please try logging in again.'
+      }
+    };
+
+    let currentLang = 'pt'; // Idioma padrão
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          element.textContent = translations[lang][key];
+        }
+      });
+      document.title = translations[lang].loginTitle;
+    }
+
+    // Detectar idioma do navegador
+    function detectBrowserLanguage() {
+      const browserLang = (navigator.language || 'pt').split('-')[0];
+      setLanguage(translations[browserLang] ? browserLang : 'pt');
+    }
+
+    function showMessage(type, text) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+      if (type === 'error') {
+        messageDiv.classList.add('bg-red-100', 'text-red-700');
+      } else if (type === 'success') {
+        messageDiv.classList.add('bg-green-100', 'text-green-700');
+      } else {
+        messageDiv.classList.add('bg-blue-100', 'text-blue-700');
+      }
+      messageDiv.style.display = 'block';
+    }
+
+    // Mostrar toast se veio de confirmação (?confirmed=1)
+    function showConfirmedToastIfNeeded() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('confirmed') === '1') {
+        showMessage('success', translations[currentLang].emailJustConfirmed);
+        // Limpar o parâmetro da URL depois de alguns segundos (pra não reaparecer em refresh)
+        setTimeout(() => {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('confirmed');
+          window.history.replaceState({}, '', url.toString());
+        }, 3000);
+      }
+    }
+
+    // --- Helpers para token (evita usar token expirado que gera 401 no financeiro) ---
+    function getStoredToken() {
+      return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    }
+
+    function removeStoredToken() {
+      try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+      try { localStorage.removeItem(TOKEN_KEY); } catch {}
+      try { sessionStorage.removeItem(USER_KEY); } catch {}
+      try { localStorage.removeItem(USER_KEY); } catch {}
+    }
+
+    // Decodifica e checa exp (se existir). Se inválido, remove.
+    function isTokenValid(token) {
+      if (!token) return false;
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (!payload) return false;
+        if (!payload.exp) return true; // sem exp assumimos válido (fallback)
+        // exp é em segundos
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp > now + 5; // margem de 5s
+      } catch (e) {
+        return false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      detectBrowserLanguage(); // Detecta idioma ao carregar
+
+      // Se tiver token salvo e inválido, limpa (evita 401 "Invalid token" ao chamar financeiro)
+      const existingToken = getStoredToken();
+      if (existingToken && !isTokenValid(existingToken)) {
+        console.warn('Token expirado/inválido encontrado — limpando antes do uso.');
+        removeStoredToken();
+      }
+
+      showConfirmedToastIfNeeded();
+
+      document.getElementById('lang-pt').addEventListener('click', () => setLanguage('pt'));
+      document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
+
+      const loginForm = document.getElementById('loginForm');
+      const togglePassword = document.getElementById('togglePassword');
+      const submitBtn = document.getElementById('submitBtn');
+
+      togglePassword.addEventListener('click', () => {
+        const pwd = document.getElementById('password');
+        if (pwd.type === 'password') {
+          pwd.type = 'text';
+          togglePassword.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+          pwd.type = 'password';
+          togglePassword.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+      });
+
+      // Função auxiliar para trocar estado do botão enquanto envia
+      function setSubmitting(isSubmitting) {
+        loginForm.dataset.sending = isSubmitting ? 'true' : 'false';
+        submitBtn.disabled = !!isSubmitting;
+        submitBtn.setAttribute('aria-busy', !!isSubmitting);
+        if (isSubmitting) {
+          submitBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span>Entrando...</span>';
+        } else {
+          submitBtn.innerHTML = translations[currentLang].loginButton || 'Entrar';
+        }
+      }
+
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Evita envio duplicado
+        if (loginForm.dataset.sending === 'true') return;
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const remember = document.getElementById('rememberMe').checked;
+
+        setSubmitting(true);
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha: password }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (response.ok) {
+            // Salva token e info do usuário (mantendo seu comportamento original)
+            try {
+              if (remember) {
+                localStorage.setItem(TOKEN_KEY, data.token);
+                localStorage.setItem(USER_KEY, JSON.stringify(data.user || {}));
+              } else {
+                sessionStorage.setItem(TOKEN_KEY, data.token);
+                sessionStorage.setItem(USER_KEY, JSON.stringify(data.user || {}));
+              }
+            } catch (e) {
+              // fallback se storage estiver restrito
+              try { localStorage.setItem(TOKEN_KEY, data.token); localStorage.setItem(USER_KEY, JSON.stringify(data.user || {})); } catch {}
+            }
+
+            showMessage('success', translations[currentLang].loginSuccess);
+
+            setTimeout(() => {
+              window.location.href = 'client-area.html';
+            }, 800);
+            return;
+          } else {
+            // Tratamento de erros por status
+            let errorMessage = translations[currentLang].unknownError;
+
+            if (response.status === 401) {
+              // Credenciais inválidas
+              errorMessage = data.error || translations[currentLang].invalidCredentials;
+
+              // Se houver um token armazenado e recebemos 401, limpamos para evitar loops em outras páginas
+              if (getStoredToken()) {
+                removeStoredToken();
+                // Mostrar mensagem mais explícita
+                errorMessage = translations[currentLang].tokenInvalidCleared + ' ' + errorMessage;
+              }
+            } else if (response.status === 403) {
+              errorMessage = data.error || 'Conta pendente. Confirme seu email.';
+            } else if (response.status === 429 && data.retryAfterSeconds) {
+              errorMessage = translations[currentLang].rateLimitExceeded.replace('{seconds}', data.retryAfterSeconds);
+            } else if (data.error) {
+              errorMessage = data.error;
+            } else if (response.status >= 500) {
+              errorMessage = translations[currentLang].serverError;
+            }
+
+            showMessage('error', errorMessage);
+          }
+        } catch (error) {
+          console.error('Erro de rede ou inesperado:', error);
+          showMessage('error', translations[currentLang].networkError);
+        } finally {
+          setSubmitting(false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

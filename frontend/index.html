@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartQuota - Cadastro Completo</title>
+  <style>
+    :root{
+      --bg:#f4f4f4; --card:#fff; --text:#333; --muted:#666;
+      --primary:#0078D4; --primary-600:#0062ab; --border:#ddd;
+      --success:#e6f7e6; --error:#fde8e8;
+    }
+    *{box-sizing:border-box}
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 24px auto 60px;
+      padding: 0 16px;
+    }
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    h1 { margin: 0 0 8px; }
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    form { max-width: 980px; }
+    .grid{display:grid;gap:14px}
+    @media(min-width:720px){ .grid-2{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:repeat(3,1fr)} }
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    .req{color:#cc0000}
+    .input{
+      display:flex; align-items:center; gap:8px;
+      border:1px solid var(--border); border-radius:8px;
+      padding:10px 12px; background:#fff;
+    }
+    input, select { border:none; outline:none; width:100%; font:inherit; background:transparent; }
+    .hint{font-size:12px; color:var(--muted); margin-top:6px}
+    .actions{display:flex; gap:10px; margin-top:8px}
+    button {
+      background-color: var(--primary);
+      color: white;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight:700;
+    }
+    button:hover{background: var(--primary-600)}
+    .ghost{background:#f8f8f8; color:#222; border:1px solid var(--border)}
+    #resultado {
+      margin-top: 16px;
+      padding: 15px;
+      border-radius: 8px;
+      border:1px solid #cfe6cf;
+      background: var(--success);
+      display:none;
+    }
+    #resultado.error{
+      background: var(--error);
+      border-color:#f2b8b8;
+    }
+    .row{display:flex; gap:10px; align-items:center}
+    .flag{width:18px;height:12px;border-radius:2px;object-fit:cover;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+    .small-links{margin-top:8px; font-size:14px}
+    .small-links a{color:var(--primary); text-decoration:none}
+    .small-links a:hover{text-decoration:underline}
+    .toolbar{display:flex; gap:10px; align-items:center}
+    .toolbar select{border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:#fff}
+
+    /* NOVO: estilo rápido para os links visíveis abaixo dos botões */
+    .quick-links { display:flex; gap:12px; align-items:center; margin-top:10px; }
+    .quick-link-btn {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 6px 8px;
+      text-decoration: underline;
+    }
+    .quick-link-btn.ghost-like {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1 id="titulo">Cadastro Completo de Cliente</h1>
+        <div id="subtitulo" class="hint">Preencha seus dados para criar sua conta.</div>
+      </div>
+      <div class="toolbar">
+        <label for="idioma" class="hint" style="font-weight:600">Idioma:</label>
+        <select id="idioma">
+          <option value="pt-BR" selected>Português</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="card">
+      <form id="formCliente" novalidate>
+        <div class="grid grid-2">
+          <div>
+            <label id="labelNome">Nome Completo <span class="req">*</span></label>
+            <div class="input">
+              <input type="text" name="nome" id="nome" required>
+            </div>
+          </div>
+
+          <div>
+            <label id="labelEmail">Email <span class="req">*</span></label>
+            <div class="input">
+              <input type="email" name="email" id="email" required autocomplete="email">
+            </div>
+            <div class="hint" id="hintEmail">Usaremos para enviar a confirmação.</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div>
+            <label id="labelConfirmEmail">Confirmar Email <span class="req">*</span></label>
+            <div class="input">
+              <input type="email" name="confirmEmail" id="confirmEmail" required autocomplete="email">
+            </div>
+          </div>
+
+          <div>
+            <label id="labelTelefone">Telefone <span class="req">*</span></label>
+            <div class="input">
+              <input type="text" name="telefone" id="telefone" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div>
+            <label id="labelMoeda">Moeda <span class="req">*</span></label>
+            <div class="input">
+              <select name="moeda" id="moeda" required>
+                <option value="EUR">Euro (€)</option>
+                <option value="USD">Dólar ($)</option>
+                <option value="GBP">Libra (£)</option>
+                <option value="BRL">Real (R$)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label id="labelPais">País <span class="req">*</span></label>
+            <div class="input">
+              <span class="row" style="gap:8px">
+                <img id="flag" class="flag" alt="" src="https://flagcdn.com/w20/pt.png">
+                <select id="pais" name="pais" required></select>
+              </span>
+            </div>
+            <div class="hint" id="hintPais">Selecione seu país.</div>
+          </div>
+
+          <div>
+            <label id="labelEstado">Estado/Província <span class="req">*</span></label>
+            <div class="input" id="estadoWrapper">
+              <input type="text" name="estado" id="estado" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div>
+            <label id="labelRua">Rua <span class="req">*</span></label>
+            <div class="input"><input type="text" name="rua" id="rua" required></div>
+          </div>
+          <div>
+            <label id="labelNumero">Número <span class="req">*</span></label>
+            <div class="input"><input type="text" name="numero" id="numero" required></div>
+          </div>
+          <div>
+            <label id="labelCidade">Cidade <span class="req">*</span></label>
+            <div class="input"><input type="text" name="cidade" id="cidade" required></div>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div>
+            <label id="labelSenha">Senha <span class="req">*</span></label>
+            <div class="input"><input type="password" name="senha" id="senha" required minlength="6"></div>
+            <div class="hint" id="hintSenha">Mínimo 6 caracteres.</div>
+          </div>
+          <div>
+            <label id="labelConfirmar">Confirmar Senha <span class="req">*</span></label>
+            <div class="input"><input type="password" name="confirmarSenha" id="confirmarSenha" required></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="botaoCadastrar">Cadastrar</button>
+          <button type="button" class="ghost" id="btnLimpar">Limpar</button>
+        </div>
+
+        <!-- NOVO: links visíveis logo abaixo dos botões (Já tenho cadastro / Esqueci minha senha) -->
+        <div class="quick-links" aria-hidden="false">
+          <a id="linkQuickLogin" href="login.html" class="small-links">Já tenho cadastro</a>
+          <button id="btnForgotQuick" type="button" class="quick-link-btn">Esqueci minha senha</button>
+        </div>
+        <!-- FIM: quick links -->
+
+        <div id="resultado"></div>
+        <div id="accountHelp" class="small-links" style="display:none">
+          <span id="alreadyText">Este email já possui conta. </span>
+          <a id="linkLogin" href="login.html">Fazer login</a> · <!-- NOVO: corrigido link -->
+          <a id="linkForgot" href="recuperar.html">Esqueci minha senha</a> <!-- NOVO: caminho relativo -->
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:3001'; // NOVO: base URL centralizada
+
+    // Referências
+    const form = document.getElementById('formCliente');
+    const resultado = document.getElementById('resultado');
+    const accountHelp = document.getElementById('accountHelp');
+    const idiomaSel = document.getElementById('idioma');
+    const paisSelect = document.getElementById('pais');
+    const flagImg = document.getElementById('flag');
+
+    // Países
+    const COUNTRIES = [
+      ["AF","Afghanistan"],["AL","Albania"],["DZ","Algeria"],["AO","Angola"],["AR","Argentina"],["AM","Armenia"],
+      ["AU","Australia"],["AT","Austria"],["AZ","Azerbaijan"],["BH","Bahrain"],["BD","Bangladesh"],["BY","Belarus"],
+      ["BE","Belgium"],["BZ","Belize"],["BJ","Benin"],["BO","Bolivia"],["BA","Bosnia and Herzegovina"],["BW","Botswana"],
+      ["BR","Brazil"],["BG","Bulgaria"],["BF","Burkina Faso"],["BI","Burundi"],["KH","Cambodia"],["CM","Cameroon"],
+      ["CA","Canada"],["CV","Cape Verde"],["CL","Chile"],["CN","China"],["CO","Colombia"],["CR","Costa Rica"],
+      ["HR","Croatia"],["CY","Cyprus"],["CZ","Czechia"],["DK","Denmark"],["DO","Dominican Republic"],["EC","Ecuador"],
+      ["EG","Egypt"],["SV","El Salvador"],["EE","Estonia"],["ET","Ethiopia"],["FI","Finland"],["FR","France"],
+      ["GE","Georgia"],["DE","Germany"],["GH","Ghana"],["GR","Greece"],["GT","Guatemala"],["HT","Haiti"],
+      ["HN","Honduras"],["HU","Hungary"],["IS","Iceland"],["IN","India"],["ID","Indonesia"],["IR","Iran"],
+      ["IE","Ireland"],["IL","Israel"],["IT","Italy"],["JP","Japan"],["JO","Jordan"],["KZ","Kazakhstan"],["KE","Kenya"],
+      ["KR","South Korea"],["KW","Kuwait"],["KG","Kyrgyzstan"],["LA","Laos"],["LV","Latvia"],["LB","Lebanon"],
+      ["LY","Libya"],["LT","Lithuania"],["LU","Luxembourg"],["MG","Madagascar"],["MW","Malawi"],["MY","Malaysia"],
+      ["ML","Mali"],["MT","Malta"],["MR","Mauritania"],["MU","Mauritius"],["MX","Mexico"],["MD","Moldova"],
+      ["MC","Monaco"],["MN","Mongolia"],["ME","Montenegro"],["MA","Morocco"],["MZ","Mozambique"],["MM","Myanmar"],
+      ["NA","Namibia"],["NP","Nepal"],["NL","Netherlands"],["NZ","New Zealand"],["NI","Nicaragua"],["NE","Niger"],
+      ["NG","Nigeria"],["NO","Norway"],["OM","Oman"],["PK","Pakistan"],["PA","Panama"],["PG","Papua New Guinea"],
+      ["PY","Paraguay"],["PE","Peru"],["PH","Philippines"],["PL","Poland"],["PT","Portugal"],["QA","Qatar"],
+      ["RO","Romania"],["RU","Russia"],["RW","Rwanda"],["SA","Saudi Arabia"],["SN","Senegal"],["RS","Serbia"],
+      ["SG","Singapore"],["SK","Slovakia"],["SI","Slovenia"],["ZA","South Africa"],["ES","Spain"],["LK","Sri Lanka"],
+      ["SE","Sweden"],["CH","Switzerland"],["SY","Syria"],["TW","Taiwan"],["TH","Thailand"],["TN","Tunisia"],
+      ["TR","Türkiye"],["UG","Uganda"],["UA","Ukraine"],["AE","United Arab Emirates"],["GB","United Kingdom"],
+      ["US","United States"],["UY","Uruguay"],["UZ","Uzbekistan"],["VE","Venezuela"],["VN","Vietnam"],["ZM","Zambia"],["ZW","Zimbabwe"]
+    ].sort((a,b)=>a[1].localeCompare(b[1]));
+
+    function buildCountrySelect(defaultCode="PT"){
+      paisSelect.innerHTML = "";
+      COUNTRIES.forEach(([code,name])=>{
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = name;
+        paisSelect.appendChild(opt);
+      });
+      paisSelect.value = defaultCode;
+      setFlag(defaultCode);
+      ajustarEstadoPorPais(defaultCode);
+    }
+    function countryName(code){
+      const item = COUNTRIES.find(c=>c[0]===code);
+      return item ? item[1] : code;
+    }
+    function setFlag(code){
+      flagImg.src = `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
+      flagImg.alt = code;
+    }
+
+    const estadosBrasil = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+    function ajustarEstadoPorPais(code){
+      const wrapper = document.getElementById('estadoWrapper');
+      const atual = document.getElementById('estado');
+      if(code === 'BR'){
+        if(atual.tagName === 'SELECT') return;
+        const select = document.createElement('select');
+        select.name = 'estado'; select.id = 'estado'; select.required = true;
+        estadosBrasil.forEach(sigla=>{
+          const o = document.createElement('option');
+          o.value = sigla; o.textContent = sigla;
+          select.appendChild(o);
+        });
+        wrapper.innerHTML = '';
+        const iconSpace = document.createElement('span'); iconSpace.style.width='0';
+        wrapper.appendChild(iconSpace);
+        wrapper.appendChild(select);
+      }else{
+        if(atual.tagName === 'INPUT') return;
+        const input = document.createElement('input');
+        input.type = 'text'; input.name='estado'; input.id='estado'; input.required = true;
+        wrapper.innerHTML = '';
+        const iconSpace = document.createElement('span'); iconSpace.style.width='0';
+        wrapper.appendChild(iconSpace);
+        wrapper.appendChild(input);
+      }
+    }
+    paisSelect.addEventListener('change', ()=>{
+      setFlag(paisSelect.value);
+      ajustarEstadoPorPais(paisSelect.value);
+    });
+
+    // I18n básico
+    async function carregarIdioma(id){
+      try{
+        const res = await fetch('lang.json');
+        const all = await res.json();
+        const t = all[id] || all['pt-BR'] || {};
+        const fallback = (k, def)=> t[k] || def;
+
+        document.getElementById('titulo').textContent = fallback('title','Cadastro Completo de Cliente');
+        document.getElementById('subtitulo').textContent = fallback('subtitle','Preencha seus dados para criar sua conta.');
+        document.getElementById('labelNome').innerHTML = fallback('fullName','Nome Completo') + ' <span class="req">*</span>';
+        document.getElementById('labelEmail').innerHTML = fallback('email','Email') + ' <span class="req">*</span>';
+        document.getElementById('labelConfirmEmail').innerHTML = (t.confirmEmail || 'Confirmar Email') + ' <span class="req">*</span>';
+        document.getElementById('labelTelefone').innerHTML = fallback('phone','Telefone') + ' <span class="req">*</span>';
+        document.getElementById('labelRua').innerHTML = fallback('street','Rua') + ' <span class="req">*</span>';
+        document.getElementById('labelNumero').innerHTML = fallback('number','Número') + ' <span class="req">*</span>';
+        document.getElementById('labelCidade').innerHTML = fallback('city','Cidade') + ' <span class="req">*</span>';
+        document.getElementById('labelEstado').innerHTML = (t.state || 'Estado/Província') + ' <span class="req">*</span>';
+        document.getElementById('labelPais').innerHTML = fallback('country','País') + ' <span class="req">*</span>';
+        document.getElementById('labelSenha').innerHTML = fallback('password','Senha') + ' <span class="req">*</span>';
+        document.getElementById('labelConfirmar').innerHTML = fallback('confirmPassword','Confirmar Senha') + ' <span class="req">*</span>';
+        document.getElementById('labelMoeda').innerHTML = fallback('currency','Moeda') + ' <span class="req">*</span>';
+        document.getElementById('botaoCadastrar').textContent = fallback('submit','Cadastrar');
+        document.getElementById('btnLimpar').textContent = fallback('clear','Limpar');
+        document.getElementById('hintEmail').textContent = t.hintEmail || 'Usaremos para enviar a confirmação.';
+        document.getElementById('hintSenha').textContent = t.hintPassword || 'Mínimo 6 caracteres.';
+        document.getElementById('hintPais').textContent = t.hintCountry || 'Selecione seu país.';
+        document.getElementById('alreadyText').textContent = t.alreadyAccount || 'Este email já possui conta. ';
+        document.getElementById('linkLogin').textContent = t.login || 'Fazer login';
+        document.getElementById('linkForgot').textContent = t.forgot || 'Esqueci minha senha';
+      }catch{}
+    }
+    idiomaSel.addEventListener('change', ()=>carregarIdioma(idiomaSel.value));
+    carregarIdioma('pt-BR');
+
+    // Inicializações
+    buildCountrySelect('PT');
+
+    function showSuccess(html){
+      resultado.style.display='block';
+      resultado.className='';
+      resultado.innerHTML = html;
+    }
+    function showError(html){
+      resultado.style.display='block';
+      resultado.className='error';
+      resultado.innerHTML = html;
+    }
+    function hideMsg(){ resultado.style.display='none'; accountHelp.style.display='none'; }
+
+    function emailsIguais(){
+      const a = (document.getElementById('email').value||'').trim().toLowerCase();
+      const b = (document.getElementById('confirmEmail').value||'').trim().toLowerCase();
+      return a === b;
+    }
+    function senhasIguais(){
+      return document.getElementById('senha').value === document.getElementById('confirmarSenha').value;
+    }
+
+    // ---------- NOVO: checagem de email ao sair do campo (debounced) ----------
+    const emailInput = document.getElementById('email');
+    let emailCheckTimer = null;
+    emailInput.addEventListener('blur', () => {
+      // Debounce pequeno para evitar chamadas duplicadas
+      clearTimeout(emailCheckTimer);
+      emailCheckTimer = setTimeout(checkEmailExists, 250);
+    });
+
+    async function checkEmailExists() {
+      const email = (emailInput.value || '').trim();
+      if (!email) return;
+
+      try {
+        const url = `${API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`;
+        const res = await fetch(url, { method: 'GET' });
+        // Se rota não existe ou erro 404, ignoramos (back-end pode ainda não ter)
+        if (res.status === 404) return;
+        if (!res.ok) {
+          // Não mostrar erro agressivo para o usuário — apenas log
+          console.warn('check-email status', res.status);
+          return;
+        }
+        const j = await res.json();
+        // Espera-se { exists: true } do backend
+        if (j && j.exists) {
+          showError('<strong>Este email já está cadastrado.</strong>');
+          accountHelp.style.display = 'block';
+        } else {
+          // Se não existe, escondemos mensagem de ajuda
+          if (resultado.style.display === 'block' && resultado.className === 'error') {
+            // se a message atual é de email duplicado, esconda
+            // nota: não sobrescreve outras mensagens de erro
+            const txt = resultado.innerText || '';
+            if (txt.toLowerCase().includes('email')) {
+              hideMsg();
+            }
+          }
+        }
+      } catch (err) {
+        // Falha na checagem: ignora e loga (evita quebrar UX)
+        console.warn('Falha ao checar email:', err.message || err);
+      }
+    }
+    // -----------------------------------------------------------------------
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg();
+
+      if(!emailsIguais()){
+        showError('<strong>Erro:</strong> Os emails não coincidem.');
+        return;
+      }
+      if(!senhasIguais()){
+        showError('<strong>Erro:</strong> As senhas não coincidem.');
+        return;
+      }
+
+      const dados = {
+        nome: form.nome.value,
+        email: form.email.value,
+        telefone: form.telefone.value,
+        endereco: {
+          rua: form.rua.value,
+          numero: form.numero.value,
+          cidade: form.cidade.value,
+          estado: form.estado.value,
+          pais: countryName(paisSelect.value)
+        },
+        senha: form.senha.value,
+        moeda: form.moeda.value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/cliente`, { // NOVO: usa base URL
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+
+        let json = {};
+        try { json = await res.json(); } catch(_){}
+
+        if (res.ok) {
+          showSuccess(`
+            <strong>Cadastro realizado com sucesso!</strong><br>
+            Verifique seu email para confirmar o cadastro.<br><br>
+            <strong>Cliente:</strong> ${json.cliente?.nome || dados.nome}<br>
+            <strong>Email:</strong> ${json.cliente?.email || dados.email}<br>
+            <strong>País:</strong> ${json.cliente?.endereco?.pais || dados.endereco.pais}<br>
+            <strong>Moeda:</strong> ${json.cliente?.moeda || dados.moeda}
+          `);
+          form.reset();
+        } else {
+          // NOVO: trata 429 (rate limit)
+          if (res.status === 429) {
+            const retryAfter = res.headers.get('Retry-After');
+            const seconds = retryAfter ? parseInt(retryAfter, 10) : (json.retryAfterSeconds || 60);
+            showError(`<strong>Muitas tentativas.</strong> Tente novamente em ${seconds} segundos.`);
+            return;
+          }
+
+          const msg = (json.error || '').toLowerCase();
+          if (res.status === 409 || msg.includes('já cadas')) {
+            showError('<strong>Este email já está cadastrado.</strong>');
+            accountHelp.style.display = 'block';
+          } else {
+            showError('<strong>Erro:</strong> ' + (json.error || res.statusText || 'Não foi possível concluir o cadastro.'));
+          }
+        }
+      } catch (err) {
+        showError('<strong>Erro de conexão:</strong> ' + err.message);
+      }
+    });
+
+    document.getElementById('btnLimpar').addEventListener('click', ()=>{
+      form.reset(); hideMsg();
+    });
+
+    // ---------- NOVO: comportamento dos links rápidos ----------
+    document.getElementById('linkQuickLogin').addEventListener('click', (e) => {
+      // link normal já aponta para login.html; isto garante navegação via JS se necessário
+      // deixa o comportamento padrão
+    });
+
+    document.getElementById('btnForgotQuick').addEventListener('click', (e) => {
+      // Redireciona para a página de recuperação (recuperar.html)
+      // Você pode também trocar para um modal se preferir
+      window.location.href = 'recuperar.html';
+    });
+
+    // Também manter os links dentro de accountHelp funcionando
+    document.getElementById('linkForgot').addEventListener('click', (e) => {
+      // comportamento padrão para abrir recuperar.html
+    });
+    // ----------------------------------------------------------
+
+  </script>
+</body>
+</html>

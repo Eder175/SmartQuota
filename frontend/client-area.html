@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Área do Cliente - SmartQuota</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .sidebar { min-height: 100vh; }
+    .menu-item.active { background: rgba(0,0,0,0.06); border-radius: 10px; }
+    .iframe-wrap { height: calc(100vh - 64px); } /* header 64px */
+    .content-iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; background: white; }
+    .small-note { font-size: 0.85rem; color: #6b7280; }
+    .dark .menu-item.active { background: rgba(255,255,255,0.06); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar w-64 p-6 bg-white border-r hidden md:block">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white mr-3">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+          <div class="font-bold text-lg">SmartQuota</div>
+          <div class="text-sm text-gray-500">Área do Cliente</div>
+        </div>
+      </div>
+
+      <div class="mb-4 card p-3 rounded-lg bg-gray-50">
+        <div id="userName" class="font-semibold">Usuário</div>
+        <div id="userEmail" class="text-sm text-gray-500">email@exemplo.com</div>
+      </div>
+
+      <nav class="space-y-1">
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="overview.html">
+          <i class="fas fa-home w-5"></i> Visão Geral
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="financas.html">
+          <i class="fas fa-wallet w-5"></i> Finanças Pessoais
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="consorcio.html">
+          <i class="fas fa-users w-5"></i> Consórcio
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="crypto.html">
+          <i class="fas fa-coins w-5"></i> Crypto
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="acoes.html">
+          <i class="fas fa-chart-line w-5"></i> Ações
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="relatorios.html">
+          <i class="fas fa-file-alt w-5"></i> Relatórios
+        </button>
+        <div class="border-t my-2"></div>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="juros_simples.html">
+          <i class="fas fa-percent w-5"></i> Juros Simples
+        </button>
+        <button class="menu-item w-full text-left p-3 flex items-center gap-3 hover:bg-gray-100 rounded" data-target="juros_compostos.html">
+          <i class="fas fa-percentage w-5"></i> Juros Compostos
+        </button>
+      </nav>
+
+      <div class="mt-auto pt-4">
+        <button id="themeToggle" class="w-full p-3 flex items-center gap-3 text-sm hover:bg-gray-100 rounded">
+          <i class="fas fa-moon"></i> Modo Escuro
+        </button>
+        <button id="logoutBtn" class="w-full mt-2 p-3 flex items-center gap-3 text-sm text-red-600 hover:bg-red-50 rounded">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile topbar -->
+    <div class="w-full md:hidden bg-white border-b p-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="btnOpenMenu" class="p-2"><i class="fas fa-bars"></i></button>
+        <div class="font-bold">SmartQuota</div>
+      </div>
+      <div>
+        <button id="logoutMobile" class="p-2 text-red-600"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main class="flex-1 p-6">
+      <header class="flex items-center justify-between mb-4">
+        <div>
+          <h1 id="pageTitle" class="text-2xl font-bold">Visão Geral</h1>
+          <div class="small-note">Escolha uma seção no menu à esquerda</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="openFinancasNewTab" class="px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"><i class="fas fa-wallet mr-2"></i>Abrir Finanças</button>
+        </div>
+      </header>
+
+      <div class="iframe-wrap card p-4 bg-white rounded-lg shadow">
+        <iframe id="contentFrame" class="content-iframe" src="overview.html" title="Conteúdo"></iframe>
+        <div id="iframeError" class="hidden mt-4 p-3 bg-yellow-50 text-yellow-800 rounded">Não foi possível carregar a página. Verifique se o arquivo existe.</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Config
+    const TOKEN_KEY = 'sq_token';
+    const USER_KEY = 'sq_user';
+    const defaultPage = 'overview.html'; // página de visão geral (pode criar simples)
+    const sidebar = document.getElementById('sidebar');
+    const menuItems = Array.from(document.querySelectorAll('.menu-item'));
+    const iframe = document.getElementById('contentFrame');
+    const iframeError = document.getElementById('iframeError');
+    const pageTitle = document.getElementById('pageTitle');
+
+    // Helper token
+    function getToken() {
+      return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
+    }
+    function removeToken() {
+      try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+      try { localStorage.removeItem(TOKEN_KEY); } catch {}
+      try { sessionStorage.removeItem(USER_KEY); } catch {}
+      try { localStorage.removeItem(USER_KEY); } catch {}
+    }
+    function isTokenValidSimple(token) {
+      if (!token) return false;
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        if (!payload) return false;
+        if (!payload.exp) return true;
+        const now = Math.floor(Date.now()/1000);
+        return payload.exp > now;
+      } catch(e) {
+        return false;
+      }
+    }
+
+    // Redireciona para login caso token ausente/inválido
+    (function checkAuth() {
+      const token = getToken();
+      if (!isTokenValidSimple(token)) {
+        removeToken();
+        // volta para login
+        window.location.href = 'login.html';
+      }
+    })();
+
+    // Preencher user info
+    try {
+      const userRaw = sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY);
+      const user = userRaw ? JSON.parse(userRaw) : null;
+      if (user) {
+        document.getElementById('userName').textContent = user.nome || (user.name || 'Usuário');
+        document.getElementById('userEmail').textContent = user.email || '';
+      }
+    } catch(e){ console.warn('Erro lendo user info', e); }
+
+    // Menu click
+    menuItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target');
+        setActiveMenu(btn);
+        loadPage(target);
+      });
+    });
+
+    function setActiveMenu(el) {
+      menuItems.forEach(m => m.classList.remove('active'));
+      el.classList.add('active');
+      const txt = el.textContent.trim();
+      pageTitle.textContent = txt;
+    }
+
+    // Carrega página no iframe e manipula histórico
+    function loadPage(path, push = true) {
+      iframeError.classList.add('hidden');
+      iframe.src = path;
+      if (push) {
+        const state = { page: path };
+        history.pushState(state, '', '#' + encodeURIComponent(path));
+      }
+    }
+
+    // Detecta se iframe carregou com erro
+    iframe.addEventListener('load', () => {
+      iframeError.classList.add('hidden');
+      // Optionally update title from iframe if page exposes document.title
+      try {
+        const t = iframe.contentDocument && iframe.contentDocument.title;
+        if (t) pageTitle.textContent = t;
+      } catch (e) {
+        // cross-origin shouldn't happen since same origin, but ignore if so.
+      }
+    });
+    iframe.addEventListener('error', () => {
+      iframeError.classList.remove('hidden');
+    });
+
+    // Back/forward support
+    window.addEventListener('popstate', (ev) => {
+      const state = ev.state;
+      if (state && state.page) {
+        iframe.src = state.page;
+      } else {
+        // fallback
+        iframe.src = defaultPage;
+      }
+    });
+
+    // Open Financas in same iframe or in new tab
+    document.getElementById('openFinancasNewTab').addEventListener('click', () => {
+      // abre em nova aba
+      window.open('financas.html', '_blank');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      if (!confirm('Deseja sair?')) return;
+      removeToken();
+      window.location.href = 'login.html';
+    });
+    document.getElementById('logoutMobile').addEventListener('click', () => {
+      removeToken();
+      window.location.href = 'login.html';
+    });
+
+    // Mobile menu toggle
+    document.getElementById('btnOpenMenu').addEventListener('click', () => {
+      sidebar.classList.toggle('hidden');
+    });
+
+    // Theme toggle (simple)
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      document.body.classList.toggle('dark');
+    });
+
+    // Inicialização: carregar página do hash (se houver) ou default
+    (function initFromHash() {
+      const hash = decodeURIComponent(location.hash.replace('#','')) || '';
+      if (hash) {
+        // tenta selecionar menu com este target
+        const match = menuItems.find(m => m.getAttribute('data-target') === hash);
+        if (match) setActiveMenu(match);
+        iframe.src = hash;
+      } else {
+        // ativa visão geral por padrão
+        const defaultBtn = menuItems.find(m => m.getAttribute('data-target') === 'overview.html') || menuItems[0];
+        if (defaultBtn) setActiveMenu(defaultBtn);
+        iframe.src = defaultBtn ? defaultBtn.getAttribute('data-target') : defaultPage;
+      }
+    })();
+  </script>
+</body>
+</html>

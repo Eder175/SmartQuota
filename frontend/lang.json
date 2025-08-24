@@ -1,0 +1,32 @@
+{
+  "pt-BR": {
+    "title": "Cadastro Completo de Cliente",
+    "fullName": "Nome Completo",
+    "email": "Email",
+    "phone": "Telefone",
+    "street": "Rua",
+    "number": "Número",
+    "city": "Cidade",
+    "state": "Estado",
+    "country": "País",
+    "password": "Senha",
+    "confirmPassword": "Confirmar Senha",
+    "currency": "Moeda",
+    "submit": "Cadastrar"
+  },
+  "en": {
+    "title": "Complete Client Registration",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "street": "Street",
+    "number": "Number",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "currency": "Currency",
+    "submit": "Register"
+  }
+}
