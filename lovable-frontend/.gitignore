@@ -1,2 +1,42 @@
-dist/
-dist/
+# Dependências
+/node_modules
+
+# Build
+/dist
+/dist-ssr
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+vite.config.ts.timestamp*
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Editor & SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Coverage/Testes
+/coverage
+*.lcov
+
+# Cache
+/.parcel-cache
+/.cache
+
+# Outros
+*.pem
+*.log
