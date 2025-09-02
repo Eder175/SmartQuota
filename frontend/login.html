@@ -109,9 +109,10 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'http://localhost:3001'; // Ajuste se seu backend estiver em outra porta/URL
-    const TOKEN_KEY = 'sq_token'; // padrão utilizado no frontend
-    const USER_KEY = 'sq_user';
+    // CORRIGIDO: URL dinâmica para coincidir com host do frontend
+    const API_BASE_URL = `${location.protocol}//${location.hostname}:3001`;
+    const TOKEN_KEY = 'smartquota_token'; // CORRIGIDO: chave unificada
+    const USER_KEY = 'smartquota_user'; // CORRIGIDO: chave unificada
 
     const translations = {
       pt: {
@@ -281,6 +282,8 @@
         const password = document.getElementById('password').value;
         const remember = document.getElementById('rememberMe').checked;
 
+        console.debug('[LOGIN] endpoint:', `${API_BASE_URL}/auth/login`, 'email:', email, 'remember:', remember);
+
         setSubmitting(true);
         try {
           const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -289,7 +292,12 @@
             body: JSON.stringify({ email, senha: password }),
           });
 
-          const data = await response.json().catch(() => ({}));
+          // tenta ler como texto e parsear para evitar erro no parse JSON inválido
+          const text = await response.text().catch(() => '');
+          let data = {};
+          try { data = text ? JSON.parse(text) : {}; } catch (e) { console.warn('[LOGIN] resposta não-JSON:', text); data = { raw: text }; }
+
+          console.debug('[LOGIN] status:', response.status, 'body:', data);
 
           if (response.ok) {
             // Salva token e info do usuário (mantendo seu comportamento original)
@@ -309,6 +317,7 @@
             showMessage('success', translations[currentLang].loginSuccess);
 
             setTimeout(() => {
+              // Mantendo seu redirecionamento original
               window.location.href = 'client-area.html';
             }, 800);
             return;
@@ -336,10 +345,11 @@
               errorMessage = translations[currentLang].serverError;
             }
 
+            console.warn('[LOGIN] falhou:', errorMessage);
             showMessage('error', errorMessage);
           }
         } catch (error) {
-          console.error('Erro de rede ou inesperado:', error);
+          console.error('[LOGIN] erro de rede:', error);
           showMessage('error', translations[currentLang].networkError);
         } finally {
           setSubmitting(false);

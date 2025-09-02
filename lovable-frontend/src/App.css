@@ -1,0 +1,48 @@
+/* Estilos globais adicionais ao Tailwind (SmartQuota vibe) */
+
+/* Container responsivo centralizado */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Logo animada */
+.logo {
+  height: 4rem;
+  margin: 1rem auto;
+  transition: filter 300ms ease, transform 300ms ease;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 0.75rem hsl(var(--primary) / 0.6));
+  transform: scale(1.05);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 0.75rem #61dafb);
+}
+
+/* Spin do React */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .logo.react {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* Card padrão */
+.card {
+  @apply bg-card text-card-foreground shadow-sm rounded-lg p-6;
+}
+
+/* Texto suave para docs ou info */
+.read-the-docs {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+}

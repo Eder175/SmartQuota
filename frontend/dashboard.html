@@ -431,7 +431,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'http://localhost:3001';
+    const API_BASE_URL = `${location.protocol}//${location.hostname}:3001`;
     
     // Estabilidade visual extra (evita saltos ao restaurar rolagem)
     if ('scrollRestoration' in history) {
